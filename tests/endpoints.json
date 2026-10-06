@@ -3267,6 +3267,21 @@
       "description": "Change only a function's calling convention at its exact entry address. Preserves its prototype and custom variable storage; Ghidra recomputes dynamic storage and implicit parameters. Accepts default and unprefixed aliases; call-site overrides are unchanged."
     },
     {
+      "path": "/set_function_calling_convention",
+      "method": "POST",
+      "category": "function",
+      "params": [
+        "function_address",
+        "calling_convention",
+        "program"
+      ],
+      "servers": [
+        "gui",
+        "headless"
+      ],
+      "description": "Change only a function's calling convention at its exact entry address. Preserves its prototype and custom variable storage; Ghidra recomputes dynamic storage and implicit parameters. Accepts default and unprefixed aliases; call-site overrides are unchanged."
+    },
+    {
       "path": "/set_function_no_return",
       "method": "POST",
       "category": "function",

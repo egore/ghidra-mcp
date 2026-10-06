@@ -34,8 +34,8 @@ Both run in CI on every pull request (`Offline HTTP Tier (no Ghidra)` in
    execute for real.
 
 2. **Callers obey the endpoint contract.** The fake routes from
-   `tests/endpoints.json` (215 endpoints) and checks parameters against the
-   recorded `/mcp/schema` (211 tools, each parameter carrying its declared
+   `tests/endpoints.json` (216 endpoints) and checks parameters against the
+   recorded `/mcp/schema` (212 tools, each parameter carrying its declared
    `source`). The 4 catalogued endpoints the recording does not cover get
    routing and **no parameter check at all** — correct and permanent, because
    all 4 are the headless-only project-management surface and the snapshot is

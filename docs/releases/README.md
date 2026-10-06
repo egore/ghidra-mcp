@@ -42,7 +42,7 @@ the same cycle (`/list_shadowed_globals`, `/batch_get_comments`), and rc.1
 shipped 253.
 
 After rc.1 a second pass removed 53 more tools and added 9, so
-**7.0.0 ships 215 tools** — 211 served by the GUI plugin, 196 by the headless server, 192 by both:
+**7.0.0 ships 216 tools** — 212 served by the GUI plugin, 197 by the headless server, 193 by both:
 
 - **`get_functions`** reads one function, or up to 20, with `fields=` choosing
   what comes back. It replaces `decompile_function` and eight other per-function
@@ -101,7 +101,7 @@ longer leaks a session, and the HTTP transports gain an optional bearer token
 (`GHIDRA_MCP_INBOUND_TOKEN`), `--json-response`, `--stateless-http` and
 `--tools-page-size`.
 
-**Lazy tool loading is the default.** Advertising all 215 endpoints in one
+**Lazy tool loading is the default.** Advertising all 216 endpoints in one
 `tools/list` is over a hard limit for at least one major provider — Gemini
 rejects the whole request with `400 INVALID_ARGUMENT` before a tool is ever
 called. The bridge now loads `listing,function,program` (75 endpoints plus 8

@@ -336,6 +336,12 @@ removed and 9 added since rc.1, every one named in
 Entries further down quote the catalog as it stood when they landed (251, 253,
 the 235-tool schema recording); the figures above are the current ones.
 
+### Fixed — class and namespace rename resolution
+
+- `rename_symbol(kind=class|namespace)` resolves addressless namespaces through
+  direct global lookup and member/ancestor namespaces, restoring class renames that
+  previously reported “not found”. Ambiguous bare names still require qualification.
+
 > **Scope note.** Entries describing `fun-doc/` and `scripts/fid/` were
 > removed from this section on 2026-09-18. Both moved to the `d2-game-exe`
 > repository on 2026-08-11 and their history belongs there, not in this
@@ -766,6 +772,10 @@ abstraction is deleted.
   a batch rolls back entirely when any item fails or is rejected by a naming gate.
   Creating a function at an existing entry with a different name renames it
   through `rename_function`'s naming-quality gate.
+- `rename_symbol` gains a `renames` batch mode and `kind=namespace|class`, which
+  renames the namespace symbol rather than a similarly named structure or function.
+  `create_label` gains `namespace` (created if missing) and `primary` (replaces
+  user-defined labels at the address) options, in single and bulk mode.
 - Malformed batch entries fail the whole request before dispatch instead of
   being silently dropped.
 

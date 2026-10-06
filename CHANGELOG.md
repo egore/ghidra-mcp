@@ -24,6 +24,13 @@ Scorecard's push filter and its test constant still named `main` while the
 repository's default branch is `dev`. Pushes to `dev` now trigger Scorecard,
 and the existing check against `origin/HEAD` passes on a fresh clone.
 
+### Added — atomic batches for editing tools
+
+- `rename_function` (`renames`) and `create_function` (`items`) gain batch modes;
+  a batch rolls back entirely when any item fails or is rejected by a naming gate.
+  Creating a function at an existing entry with a different name renames it
+  through `rename_function`'s naming-quality gate.
+
 ### Performance — `get_functions` opens one decompiler per call (#575)
 
 Every decompile in a `get_functions` call -- each target and each caller decompiled for

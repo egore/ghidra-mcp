@@ -14,6 +14,16 @@ Changes on `dev` after 7.0.0.
   a batch rolls back entirely when any item fails or is rejected by a naming gate.
   Creating a function at an existing entry with a different name renames it
   through `rename_function`'s naming-quality gate.
+- `rename_symbol` gains a `renames` batch mode and `kind=namespace|class`, which
+  renames the namespace symbol rather than a similarly named structure or function.
+  `create_label` gains `namespace` (created if missing) and `primary` (replaces
+  user-defined labels at the address) options, in single and bulk mode.
+
+### Fixed — class and namespace rename resolution
+
+- `rename_symbol(kind=class|namespace)` resolves addressless namespaces through
+  direct global lookup and member/ancestor namespaces, restoring class renames that
+  previously reported “not found”. Ambiguous bare names still require qualification.
 
 ### Performance — `get_functions` opens one decompiler per call (#575)
 

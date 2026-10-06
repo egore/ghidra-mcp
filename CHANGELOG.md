@@ -24,7 +24,7 @@ Scorecard's push filter and its test constant still named `main` while the
 repository's default branch is `dev`. Pushes to `dev` now trigger Scorecard,
 and the existing check against `origin/HEAD` passes on a fresh clone.
 
-### Added — atomic batches for editing tools
+### Added — atomic batches for editing tools, and `clear_data`
 
 - `rename_function` (`renames`) and `create_function` (`items`) gain batch modes;
   a batch rolls back entirely when any item fails or is rejected by a naming gate.
@@ -34,6 +34,11 @@ and the existing check against `origin/HEAD` passes on a fresh clone.
   renames the namespace symbol rather than a similarly named structure or function.
   `create_label` gains `namespace` (created if missing) and `primary` (replaces
   user-defined labels at the address) options, in single and bulk mode.
+- `apply_data_type` gains an `items` batch mode and an optional `label` created in
+  the same transaction; the existing type and eviction safeguards still apply.
+- Added `clear_data`, which undefines data without changing memory bytes and clears
+  the complete containing item when no size is given. `inspect_memory_content` now
+  reports the containing data item's type, size, label, value and offset.
 
 ### Fixed — class and namespace rename resolution
 

@@ -8,6 +8,13 @@ Complete version history for the Ghidra MCP Server project.
 
 Changes on `dev` after 7.0.0.
 
+### Added — localized decompiler overrides
+
+- Added shared GUI/headless tools to read, set and remove explicit stack-depth
+  overrides, read/set per-call-site prototype overrides, and change only a
+  function's calling convention without rebuilding its prototype or discarding
+  custom storage.
+
 ### Performance — `get_functions` opens one decompiler per call (#575)
 
 Every decompile in a `get_functions` call -- each target and each caller decompiled for

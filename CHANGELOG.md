@@ -8,6 +8,13 @@ Complete version history for the Ghidra MCP Server project.
 
 Changes on `dev` after 7.0.0.
 
+### Added — atomic batches for editing tools
+
+- `rename_function` (`renames`) and `create_function` (`items`) gain batch modes;
+  a batch rolls back entirely when any item fails or is rejected by a naming gate.
+  Creating a function at an existing entry with a different name renames it
+  through `rename_function`'s naming-quality gate.
+
 ### Performance — `get_functions` opens one decompiler per call (#575)
 
 Every decompile in a `get_functions` call -- each target and each caller decompiled for

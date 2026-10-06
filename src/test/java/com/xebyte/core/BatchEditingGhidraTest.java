@@ -80,6 +80,25 @@ public class BatchEditingGhidraTest {
         assertEquals("final_label", program.getSymbolTable().getPrimarySymbol(builder.addr("0x1040")).getName());
     }
 
+    @Test public void batchDataDefinitionsOptionalLabelsInspectionAndContainingClear() {
+        ok(types.applyDataType(null, "", false, program, "off", List.of(
+            Map.of("address", "0x1040", "data_type", "uint", "label", "g_dwCounter"),
+            Map.of("address", "0x1048", "data_type", "uchar[4]")), ""));
+        assertEquals(4, program.getListing().getDefinedDataAt(builder.addr("0x1040")).getLength());
+        assertEquals("g_dwCounter", program.getSymbolTable().getPrimarySymbol(builder.addr("0x1040")).getName());
+        String inspection = analysis.inspectMemoryContent(builder.addr("0x1041"), 4, false, program).toJson();
+        assertTrue(inspection, inspection.contains("\"match\":\"containing\""));
+        assertTrue(inspection, inspection.contains("g_dwCounter"));
+        ok(types.clearData(builder.addr("0x1041"), 0, program));
+        assertNull(program.getListing().getDefinedDataAt(builder.addr("0x1040")));
+        assertNotNull(program.getListing().getDefinedDataAt(builder.addr("0x1048")));
+        Response failed = types.applyDataType(null, "", false, program, "off", List.of(
+            Map.of("address", "0x1050", "data_type", "uint"), Map.of("address", "0x1058", "data_type", "nonexistent")), "");
+        assertTrue(failed instanceof Response.Err);
+        assertNull(program.getListing().getDefinedDataAt(builder.addr("0x1050")));
+        assertTrue(types.clearData(builder.addr("0x1040"), -1, program) instanceof Response.Err);
+    }
+
     @Test public void existingFunctionCreationHonorsRenamePolicyAndBatchRollback() {
         String before = program.getFunctionManager().getFunctionAt(builder.addr("0x1000")).getName();
         Response response = functions.createFunctionAtAddress(null, "", true, program, List.of(
@@ -103,5 +122,29 @@ public class BatchEditingGhidraTest {
         var labelTool = new AnnotationScanner(symbols).getDescriptors().stream()
             .filter(d -> d.path().equals("/create_label")).findFirst().orElseThrow();
         assertTrue(labelTool.access().isDestructive());
+    }
+
+    @Test public void clearDataRefusesToDestroyNamedGlobalsLikeTheOtherClearingWriters() {
+        ok(types.applyDataType(builder.addr("0x1060"), "uchar[16]", false, program, null, List.of(), "g_abTable"));
+        Response inside = types.clearData(builder.addr("0x1064"), 4, program);
+        assertTrue(inside.toJson(), inside.toJson().contains("type_would_evict"));
+        assertNotNull(program.getListing().getDefinedDataAt(builder.addr("0x1060")));
+
+        ok(types.applyDataType(builder.addr("0x1080"), "uchar[4]", false, program, null, List.of(), ""));
+        ok(types.applyDataType(builder.addr("0x1088"), "uint", false, program, null, List.of(), "g_dwCounter"));
+        Response forward = types.clearData(builder.addr("0x1080"), 16, program);
+        assertTrue(forward.toJson(), forward.toJson().contains("type_would_evict"));
+        assertNotNull(program.getListing().getDefinedDataAt(builder.addr("0x1088")));
+    }
+
+    @Test public void clearDataStillClearsAWholeNamedItemAndUnnamedNeighbours() {
+        ok(types.applyDataType(builder.addr("0x1060"), "uchar[16]", false, program, null, List.of(), "g_abTable"));
+        ok(types.clearData(builder.addr("0x1064"), 0, program));
+        assertNull(program.getListing().getDefinedDataAt(builder.addr("0x1060")));
+
+        ok(types.applyDataType(builder.addr("0x1080"), "uchar[4]", false, program, null, List.of(), ""));
+        ok(types.applyDataType(builder.addr("0x1088"), "uint", false, program, null, List.of(), ""));
+        ok(types.clearData(builder.addr("0x1080"), 16, program));
+        assertNull(program.getListing().getDefinedDataAt(builder.addr("0x1088")));
     }
 }

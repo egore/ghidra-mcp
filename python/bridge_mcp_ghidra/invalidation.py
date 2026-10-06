@@ -160,6 +160,8 @@ ENDPOINT_TIER: dict[str, InvalidationTier] = {
     "/run_script_inline": InvalidationTier.UNBOUNDED,
     "/disassemble_bytes": InvalidationTier.UNBOUNDED,
     "/clear_flow_and_repair": InvalidationTier.UNBOUNDED,
+    # Undefining code units can shrink or split any function that contains them.
+    "/clear_data": InvalidationTier.UNBOUNDED,
     "/set_image_base": InvalidationTier.UNBOUNDED,
     "/create_memory_block": InvalidationTier.UNBOUNDED,
     "/open_program": InvalidationTier.UNBOUNDED,

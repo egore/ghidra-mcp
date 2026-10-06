@@ -26,6 +26,13 @@ Changes on `dev` after 7.1.0.
   direct global lookup and member/ancestor namespaces, restoring class renames that
   previously reported “not found”. Ambiguous bare names still require qualification.
 
+### Added — atomic batches for editing tools, and `clear_data`
+- `apply_data_type` gains an `items` batch mode and an optional `label` created in
+  the same transaction; the existing type and eviction safeguards still apply.
+- Added `clear_data`, which undefines data without changing memory bytes and clears
+  the complete containing item when no size is given. `inspect_memory_content` now
+  reports the containing data item's type, size, label, value and offset.
+
 ## v7.1.0 - 2026-11-18 — minor: Ghidra 12.2 and Java 25, decompiler symbols and equates, function resources, the decompilation tree, and fixes
 
 **220 tools** — 216 served by the GUI plugin, 201 by the headless server, 197 by

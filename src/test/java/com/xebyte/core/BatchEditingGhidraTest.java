@@ -1,0 +1,78 @@
+package com.xebyte.core;
+
+import com.xebyte.headless.DirectThreadingStrategy;
+import com.xebyte.headless.HeadlessProgramProvider;
+import ghidra.program.database.ProgramBuilder;
+import ghidra.program.database.ProgramDB;
+import ghidra.program.model.symbol.*;
+import ghidra.GhidraApplicationLayout;
+import ghidra.framework.Application;
+import ghidra.framework.ApplicationConfiguration;
+import org.junit.*;
+import java.io.File;
+import static org.junit.Assume.assumeTrue;
+import java.util.*;
+import static org.junit.Assert.*;
+
+public class BatchEditingGhidraTest {
+    private ProgramBuilder builder;
+    private ProgramDB program;
+    private FunctionService functions;
+    private SymbolLabelService symbols;
+    private DataTypeService types;
+    private CommentService comments;
+    private AnalysisService analysis;
+    private HeadlessProgramProvider provider;
+    @BeforeClass public static void initialize() throws Exception {
+        String installDir = System.getenv("GHIDRA_INSTALL_DIR");
+        assumeTrue("GHIDRA_INSTALL_DIR is required for real Ghidra tests", installDir != null && !installDir.isBlank());
+        if (!Application.isInitialized()) {
+            ApplicationConfiguration configuration = new ApplicationConfiguration();
+            configuration.setInitializeLogging(false);
+            Application.initializeApplication(new GhidraApplicationLayout(new File(installDir)), configuration);
+        }
+    }
+    @Before public void setUp() throws Exception {
+        builder = new ProgramBuilder("batch-editing", ProgramBuilder._X86, "windows", this);
+        program = builder.getProgram();
+        builder.createMemory(".text", "0x1000", 256);
+        builder.setBytes("0x1000", "c3");
+        builder.setBytes("0x1010", "c3");
+        builder.disassemble("0x1000", 1);
+        builder.disassemble("0x1010", 1);
+        builder.createFunction("0x1000");
+        builder.createFunction("0x1010");
+        provider = new HeadlessProgramProvider();
+        provider.setCurrentProgram(program);
+        provider.trackOpenProgram(program);
+        DirectThreadingStrategy threading = new DirectThreadingStrategy();
+        functions = new FunctionService(provider, threading);
+        symbols = new SymbolLabelService(provider, threading);
+        types = new DataTypeService(provider, threading);
+        comments = new CommentService(provider, threading);
+        analysis = new AnalysisService(provider, threading, functions);
+    }
+    @After public void tearDown() { builder.dispose(); }
+    private static void ok(Response response) { assertTrue(response.toJson(), response instanceof Response.Ok); }
+
+    @Test public void bulkFunctionRenameAndCreationRollBackTogether() {
+        ok(functions.renameFunctionByAddress(null, "", program, "off", List.of(
+            Map.of("address", "0x1000", "new_name", "First"), Map.of("address", "0x1010", "new_name", "Second"))));
+        assertEquals("First", program.getFunctionManager().getFunctionAt(builder.addr("0x1000")).getName());
+        Response failed = functions.renameFunctionByAddress(null, "", program, "off", List.of(
+            Map.of("address", "0x1000", "new_name", "Changed"), Map.of("address", "0x1050", "new_name", "Missing")));
+        assertTrue(failed.toJson(), failed instanceof Response.Err);
+        assertEquals("First", program.getFunctionManager().getFunctionAt(builder.addr("0x1000")).getName());
+        ok(functions.createFunctionAtAddress(null, "", true, program, List.of(
+            Map.of("address", "0x1000", "name", "GetFirstValue"), Map.of("address", "0x1010", "name", "GetSecondValue"))));
+        assertEquals("GetFirstValue", program.getFunctionManager().getFunctionAt(builder.addr("0x1000")).getName());
+    }
+
+    @Test public void existingFunctionCreationHonorsRenamePolicyAndBatchRollback() {
+        String before = program.getFunctionManager().getFunctionAt(builder.addr("0x1000")).getName();
+        Response response = functions.createFunctionAtAddress(null, "", true, program, List.of(
+            Map.of("address", "0x1000", "name", "GetFirstValue"), Map.of("address", "0x1010", "name", "Get")));
+        assertTrue(response.toJson(), response instanceof Response.Err);
+        assertEquals(before, program.getFunctionManager().getFunctionAt(builder.addr("0x1000")).getName());
+    }
+}

@@ -4,6 +4,17 @@ Complete version history for the Ghidra MCP Server project.
 
 ---
 
+## Unreleased
+
+Changes on `dev` after 7.1.0.
+
+### Added — atomic batches for editing tools
+
+- `rename_function` (`renames`) and `create_function` (`items`) gain batch modes;
+  a batch rolls back entirely when any item fails or is rejected by a naming gate.
+  Creating a function at an existing entry with a different name renames it
+  through `rename_function`'s naming-quality gate.
+
 ## v7.1.0 - 2026-11-18 — minor: Ghidra 12.2 and Java 25, decompiler symbols and equates, function resources, the decompilation tree, and fixes
 
 **220 tools** — 216 served by the GUI plugin, 201 by the headless server, 197 by

@@ -43,7 +43,7 @@ tools it has not loaded; `check_tools`; a `--lazy` / `--no-lazy` startup flag an
 `--default-groups`; and the 7.0.0 consolidation pass, which folded 272 tools
 down to 251 by merging redundant ones into "one-or-many" survivors, without
 removing any capability. A second pass after 7.0.0-rc.1 took the 253 that rc.1
-shipped to 209: one function reader (`get_functions`), one function search
+shipped to 215: one function reader (`get_functions`), one function search
 (`find_functions`), one program-inventory tool (`list_program_items`), one GUI
 cursor tool (`get_ui_cursor`), one health answer (`check_connection`), and one
 name per program operation on both servers, plus `set_memory_block`, and one documentation writer (`apply_documentation`).

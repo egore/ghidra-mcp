@@ -15,6 +15,17 @@ Changes on `dev` after 7.1.0.
   Creating a function at an existing entry with a different name renames it
   through `rename_function`'s naming-quality gate.
 
+- `rename_symbol` gains a `renames` batch mode and `kind=namespace|class`, which
+  renames the namespace symbol rather than a similarly named structure or function.
+  `create_label` gains `namespace` (created if missing) and `primary` (replaces
+  user-defined labels at the address) options, in single and bulk mode.
+
+### Fixed — class and namespace rename resolution
+
+- `rename_symbol(kind=class|namespace)` resolves addressless namespaces through
+  direct global lookup and member/ancestor namespaces, restoring class renames that
+  previously reported “not found”. Ambiguous bare names still require qualification.
+
 ## v7.1.0 - 2026-11-18 — minor: Ghidra 12.2 and Java 25, decompiler symbols and equates, function resources, the decompilation tree, and fixes
 
 **220 tools** — 216 served by the GUI plugin, 201 by the headless server, 197 by

@@ -1698,6 +1698,33 @@ public final class ServiceUtils {
     }
 
     /**
+     * Map a user-supplied calling convention onto one the program's compiler spec defines.
+     * Accepts "default" and unprefixed aliases, so "cdecl" finds "__cdecl".
+     */
+    public static String resolveCallingConvention(Program program, String value) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("Calling convention is required");
+        }
+
+        Set<String> names = new TreeSet<>();
+        names.add(ghidra.program.model.lang.CompilerSpec.CALLING_CONVENTION_default);
+        for (ghidra.program.model.lang.PrototypeModel model : program.getCompilerSpec().getCallingConventions()) {
+            names.add(model.getName());
+        }
+
+        String name = value.trim();
+        if (names.contains(name)) {
+            return name;
+        }
+        for (String candidate : names) {
+            if (candidate.equalsIgnoreCase(name) || candidate.equalsIgnoreCase("__" + name)) {
+                return candidate;
+            }
+        }
+        throw new IllegalArgumentException("Unsupported calling convention '" + name + "'; supported: " + names);
+    }
+
+    /**
      * Resolve {@code name} to an enum, or refuse with a fixed message.
      * Not-found: {@code Enumeration not found: X}. Wrong kind:
      * {@code Data type 'X' is not an enumeration}.

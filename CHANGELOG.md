@@ -19,6 +19,9 @@ Changes on `dev` after 7.0.0.
   and conflicting typedefs are rejected.
 - Type resolution honors target ABI sizes and qualified category paths, rejects
   unknown C pointer targets, and preserves placeholders if replacement fails.
+- `add_struct_field` now accepts atomic bulk `fields`, rejects defined-field
+  overlaps unless `overwrite=true`, and reuses undefined padding. Field removal
+  defaults to preserving layout (`shrink=true` explicitly shifts fields).
 
 ### Performance — `get_functions` opens one decompiler per call (#575)
 

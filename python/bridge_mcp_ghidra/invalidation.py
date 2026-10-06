@@ -108,12 +108,17 @@ ENDPOINT_TIER: dict[str, InvalidationTier] = {
     "/clear_instruction_flow_override": InvalidationTier.LOCAL,
     "/add_memory_reference": InvalidationTier.LOCAL,
     "/remove_reference": InvalidationTier.LOCAL,
+    # The decompilation of the function holding the instruction changes; a caller's does not.
+    "/set_stack_depth_change": InvalidationTier.LOCAL,
+    "/remove_stack_depth_change": InvalidationTier.LOCAL,
+    "/set_call_site_prototype": InvalidationTier.LOCAL,
     # --- CALLERS: signature/name visible at call sites ---
     "/rename_function": InvalidationTier.CALLERS,
     "/rename_symbol": InvalidationTier.CALLERS,
     "/create_label": InvalidationTier.CALLERS,
     "/delete_label": InvalidationTier.CALLERS,
     "/set_function_prototype": InvalidationTier.CALLERS,
+    "/set_function_calling_convention": InvalidationTier.CALLERS,
     # Renames and re-types the function, so the widest tier of the steps it composes.
     "/apply_documentation": InvalidationTier.CALLERS,
     "/set_function_this_type": InvalidationTier.CALLERS,
@@ -549,6 +554,7 @@ async def _resolve_target_address(program: str | None, kwargs: dict) -> str | No
         kwargs,
         "function_address",
         "address",
+        "call_address",
         "entry",
         "entry_point",
     )

@@ -266,6 +266,13 @@ Deploy now writes the plugin class and upgrades markers left by earlier deploys.
   Original contributions by @sagasm, credited as co-author on the squash commit;
   consolidation and regression fixes follow the maintainer review.
 
+### Added — localized decompiler overrides
+
+- Added shared GUI/headless tools to read, set and remove explicit stack-depth
+  overrides, read/set per-call-site prototype overrides, and change only a
+  function's calling convention without rebuilding its prototype or discarding
+  custom storage.
+
 ### Fixed — integer and object-array parameters no longer bind lossily
 
 - `int` parameters reject fractional, out-of-range and missing required values

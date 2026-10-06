@@ -153,4 +153,28 @@ public class BatchEditingGhidraTest {
             .filter(d -> d.path().equals("/create_label")).findFirst().orElseThrow();
         assertTrue(labelTool.access().isDestructive());
     }
+
+    @Test public void clearDataRefusesToDestroyNamedGlobalsLikeTheOtherClearingWriters() {
+        ok(types.applyDataType(builder.addr("0x1060"), "uchar[16]", false, program, null, List.of(), "g_abTable"));
+        Response inside = types.clearData(builder.addr("0x1064"), 4, program);
+        assertTrue(inside.toJson(), inside.toJson().contains("type_would_evict"));
+        assertNotNull(program.getListing().getDefinedDataAt(builder.addr("0x1060")));
+
+        ok(types.applyDataType(builder.addr("0x1080"), "uchar[4]", false, program, null, List.of(), ""));
+        ok(types.applyDataType(builder.addr("0x1088"), "uint", false, program, null, List.of(), "g_dwCounter"));
+        Response forward = types.clearData(builder.addr("0x1080"), 16, program);
+        assertTrue(forward.toJson(), forward.toJson().contains("type_would_evict"));
+        assertNotNull(program.getListing().getDefinedDataAt(builder.addr("0x1088")));
+    }
+
+    @Test public void clearDataStillClearsAWholeNamedItemAndUnnamedNeighbours() {
+        ok(types.applyDataType(builder.addr("0x1060"), "uchar[16]", false, program, null, List.of(), "g_abTable"));
+        ok(types.clearData(builder.addr("0x1064"), 0, program));
+        assertNull(program.getListing().getDefinedDataAt(builder.addr("0x1060")));
+
+        ok(types.applyDataType(builder.addr("0x1080"), "uchar[4]", false, program, null, List.of(), ""));
+        ok(types.applyDataType(builder.addr("0x1088"), "uint", false, program, null, List.of(), ""));
+        ok(types.clearData(builder.addr("0x1080"), 16, program));
+        assertNull(program.getListing().getDefinedDataAt(builder.addr("0x1088")));
+    }
 }

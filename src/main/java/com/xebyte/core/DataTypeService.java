@@ -3548,6 +3548,12 @@ public class DataTypeService {
                                       int arrayLength, boolean allowEvict, String typeName) {
         if (type == null || allowEvict) return null;
         int totalLen = arrayLength > 0 ? type.getLength() * arrayLength : type.getLength();
+        return evictionRejection(program, addr, totalLen, typeName, "Applying this type");
+    }
+
+    /** The same gate for a writer that clears {@code totalLen} bytes without applying a type. */
+    static Response evictionRejection(Program program, Address addr, int totalLen,
+                                      String typeName, String action) {
         List<Map<String, Object>> victims = findEvictionVictims(program, addr, totalLen);
         if (victims.isEmpty()) return null;
         return Response.ok(JsonHelper.mapOf(
@@ -3558,7 +3564,7 @@ public class DataTypeService {
                 "type_name", typeName,
                 "total_bytes", totalLen,
                 "would_destroy", victims,
-                "message", "Applying this type would clear " + victims.size()
+                "message", action + " would clear " + victims.size()
                         + " named global(s) out of existence.",
                 "suggestion", evictionSuggestion(program, addr, victims)
         ));

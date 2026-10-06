@@ -40,6 +40,8 @@ and the existing check against `origin/HEAD` passes on a fresh clone.
   defaults to preserving layout (`shrink=true` explicitly shifts fields).
 - Type deletion checks users and applied data (including typedef/pointer
   wrappers and function variables/returns) and refuses unless `force=true`.
+- `search_data_types` gains an optional kind filter and accepts an empty pattern;
+  `get_type_size` reports members, signatures and base types.
 
 ### Performance — `get_functions` opens one decompiler per call (#575)
 

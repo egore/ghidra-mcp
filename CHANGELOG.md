@@ -163,6 +163,12 @@ routed through the server's threading strategy, not filesystem-only.
 - **`/find_type_users`** lists the functions whose decompilation references a data type,
   or one field of it.
 
+### Added — structure descriptions
+
+- `set_comment(type="struct", struct_name=..., comment=...)` sets, replaces, or clears a structure's description
+  in both GUI and headless mode without changing its layout or field comments.
+  `get_struct_layout` now includes the description for read-back.
+
 ### Performance — `get_functions` opens one decompiler per call (#575)
 
 Every decompile in a `get_functions` call -- each target and each caller decompiled for

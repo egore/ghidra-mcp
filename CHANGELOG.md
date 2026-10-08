@@ -24,6 +24,13 @@ Scorecard's push filter and its test constant still named `main` while the
 repository's default branch is `dev`. Pushes to `dev` now trigger Scorecard,
 and the existing check against `origin/HEAD` passes on a fresh clone.
 
+### Fixed — similar function names no longer block renames
+
+- `rename_function` treats token-subset similarity as an advisory warning even in
+  enforce mode. Descriptive names such as `GetNamedMatrixAlignmentTransformFlags`
+  are no longer rejected merely because `GetTransform` exists. Other naming-quality
+  and Function ID checks remain enforced, as does Ghidra's symbol validation.
+
 ### Performance — `get_functions` opens one decompiler per call (#575)
 
 Every decompile in a `get_functions` call -- each target and each caller decompiled for

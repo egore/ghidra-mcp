@@ -566,6 +566,13 @@ catalog as it stood then (251, 253, the 235-tool schema recording) and some
 describe a state a later 7.0.0 entry changed; those carry a "Superseded later in
 7.0.0" note. The figures above are what 7.0.0 shipped.
 
+### Fixed — similar function names no longer block renames
+
+- `rename_function` treats token-subset similarity as an advisory warning even in
+  enforce mode. Descriptive names such as `GetNamedMatrixAlignmentTransformFlags`
+  are no longer rejected merely because `GetTransform` exists. Other naming-quality
+  and Function ID checks remain enforced, as does Ghidra's symbol validation.
+
 ### Added — structure descriptions
 
 - `set_comment(type="struct", struct_name=..., comment=...)` sets, replaces, or clears a structure's description

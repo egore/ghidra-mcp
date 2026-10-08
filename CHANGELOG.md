@@ -566,6 +566,12 @@ catalog as it stood then (251, 253, the 235-tool schema recording) and some
 describe a state a later 7.0.0 entry changed; those carry a "Superseded later in
 7.0.0" note. The figures above are what 7.0.0 shipped.
 
+### Added — structure descriptions
+
+- `set_comment(type="struct", struct_name=..., comment=...)` sets, replaces, or clears a structure's description
+  in both GUI and headless mode without changing its layout or field comments.
+  `get_struct_layout` now includes the description for read-back.
+
 ### Fixed — class and namespace rename resolution
 
 - `rename_symbol(kind=class|namespace)` resolves addressless namespaces through

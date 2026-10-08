@@ -43,6 +43,12 @@ and the existing check against `origin/HEAD` passes on a fresh clone.
 - `search_data_types` gains an optional kind filter and accepts an empty pattern;
   `get_type_size` reports members, signatures and base types.
 
+### Added — structure descriptions
+
+- `set_comment(type="struct", struct_name=..., comment=...)` sets, replaces, or clears a structure's description
+  in both GUI and headless mode without changing its layout or field comments.
+  `get_struct_layout` now includes the description for read-back.
+
 ### Performance — `get_functions` opens one decompiler per call (#575)
 
 Every decompile in a `get_functions` call -- each target and each caller decompiled for

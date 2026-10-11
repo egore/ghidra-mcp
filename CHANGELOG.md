@@ -14,6 +14,11 @@ Changes on `dev` after 7.0.0.
   overrides, read/set per-call-site prototype overrides, and change only a
   function's calling convention without rebuilding its prototype or discarding
   custom storage.
+- `adjust_pointer_offset` applies Ghidra's relative-pointer typedef and component
+  offset to pointer locals or parameters, including implicit `this`, in GUI and
+  headless mode. Enables the decompiler's `ADJ()` form and preserves pointer width
+  and storage. Reports when an auto-parameter requires function-wide custom storage;
+  rejects conflicting typedefs rather than changing their other uses.
 
 ### Performance — `get_functions` opens one decompiler per call (#575)
 

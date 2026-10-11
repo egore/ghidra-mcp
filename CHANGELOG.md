@@ -272,6 +272,11 @@ Deploy now writes the plugin class and upgrades markers left by earlier deploys.
   overrides, read/set per-call-site prototype overrides, and change only a
   function's calling convention without rebuilding its prototype or discarding
   custom storage.
+- `adjust_pointer_offset` applies Ghidra's relative-pointer typedef and component
+  offset to pointer locals or parameters, including implicit `this`, in GUI and
+  headless mode. Enables the decompiler's `ADJ()` form and preserves pointer width
+  and storage. Reports when an auto-parameter requires function-wide custom storage;
+  rejects conflicting typedefs rather than changing their other uses.
 
 ### Fixed — integer and object-array parameters no longer bind lossily
 

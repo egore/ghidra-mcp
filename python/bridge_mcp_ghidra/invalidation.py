@@ -112,6 +112,7 @@ ENDPOINT_TIER: dict[str, InvalidationTier] = {
     "/set_stack_depth_change": InvalidationTier.LOCAL,
     "/remove_stack_depth_change": InvalidationTier.LOCAL,
     "/set_call_site_prototype": InvalidationTier.LOCAL,
+    "/adjust_pointer_offset": InvalidationTier.LOCAL,
     # --- CALLERS: signature/name visible at call sites ---
     "/rename_function": InvalidationTier.CALLERS,
     "/rename_symbol": InvalidationTier.CALLERS,

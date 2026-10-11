@@ -8,6 +8,16 @@ Complete version history for the Ghidra MCP Server project.
 
 Changes on `dev` after 7.0.0.
 
+### Fixed — OpenCode MCP connection stability
+
+- Bound serialized MCP responses to 8 MiB, including JSON escaping and UTF-8
+  encoding, so large tool results cannot exceed OpenCode's 10 MiB stdio buffer
+  and disconnect the bridge. Oversized results return an explicit error without
+  truncation or retrying the operation; HTTP response buffering is also bounded.
+- Cancel bridge server requests without the SDK 1.28.1's late cancellation
+  response, avoiding OpenCode's "unknown message ID" warnings while preserving
+  cancellation and request cleanup. SDK client behavior is unchanged.
+
 ### Performance — `get_functions` opens one decompiler per call (#575)
 
 Every decompile in a `get_functions` call -- each target and each caller decompiled for

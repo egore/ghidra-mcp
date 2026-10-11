@@ -566,6 +566,16 @@ catalog as it stood then (251, 253, the 235-tool schema recording) and some
 describe a state a later 7.0.0 entry changed; those carry a "Superseded later in
 7.0.0" note. The figures above are what 7.0.0 shipped.
 
+### Fixed — OpenCode MCP connection stability
+
+- Bound serialized MCP responses to 8 MiB, including JSON escaping and UTF-8
+  encoding, so large tool results cannot exceed OpenCode's 10 MiB stdio buffer
+  and disconnect the bridge. Oversized results return an explicit error without
+  truncation or retrying the operation; HTTP response buffering is also bounded.
+- Cancel bridge server requests without the SDK 1.28.1's late cancellation
+  response, avoiding OpenCode's "unknown message ID" warnings while preserving
+  cancellation and request cleanup. SDK client behavior is unchanged.
+
 ### Added — shifted pointers / Adjust Pointer Offset
 
 - `adjust_pointer_offset` applies Ghidra's relative-pointer typedef and component

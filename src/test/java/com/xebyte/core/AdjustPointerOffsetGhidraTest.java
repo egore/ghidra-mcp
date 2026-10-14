@@ -42,6 +42,7 @@ public class AdjustPointerOffsetGhidraTest {
         });
         HeadlessProgramProvider provider = new HeadlessProgramProvider();
         provider.setCurrentProgram(program);
+        provider.trackOpenProgram(program);
         service = new FunctionService(provider, new DirectThreadingStrategy());
     }
 
@@ -121,7 +122,7 @@ public class AdjustPointerOffsetGhidraTest {
         String code = service.decompileFunction(localFunction, program).getDecompiledFunction().getC();
         assertTrue(code, code.contains("ADJ(objectPart)"));
         assertFalse(localFunction.hasCustomVariableStorage());
-        ok(service.setLocalVariableType("0x1040", "objectPart", "uint", ""));
+        ok(service.setLocalVariableType(localFunction, "objectPart", "uint", program));
         assertTrue(service.adjustPointerOffset("0x1040", "objectPart", "UnifiedDevice", "36", "NotPointer", program) instanceof Response.Err);
         assertNull(program.getDataTypeManager().getDataType("/Classes/NotPointer"));
     }

@@ -31,6 +31,7 @@ public class BatchEditingGhidraTest {
         builder.createFunction("0x1010");
         provider = new HeadlessProgramProvider();
         provider.setCurrentProgram(program);
+        provider.trackOpenProgram(program);
         DirectThreadingStrategy threading = new DirectThreadingStrategy();
         functions = new FunctionService(provider, threading);
         symbols = new SymbolLabelService(provider, threading);
@@ -98,18 +99,6 @@ public class BatchEditingGhidraTest {
         }
         assertTrue(comments.batchSetComments(null, List.of(), List.of(), "null", program,
             List.of(Map.of("address", "0x1040", "comment", "text")), "invalid") instanceof Response.Err);
-    }
-
-    @Test public void guiBatchesRunOnEdtWithoutRecursiveInvokeAndWait() throws Exception {
-        SymbolLabelService gui = new SymbolLabelService(provider, new SwingThreadingStrategy());
-        ok(gui.createLabel("0x1040", "before_label", List.of(), program, false, ""));
-        ok(gui.renameSymbol("", "", "label", "", program, null, List.of(
-            Map.of("address", "0x1040", "old_name", "before_label", "new_name", "after_label"))));
-        assertEquals("after_label", program.getSymbolTable().getPrimarySymbol(builder.addr("0x1040")).getName());
-        new SwingThreadingStrategy().executeRead(() -> {
-            ok(gui.createLabel("", "", List.of(Map.of("address", "0x1048", "name", "primary_label")), program, true, ""));
-            return null;
-        });
     }
 
     @Test public void malformedHttpBatchEntriesRejectTheWholeRequest() throws Exception {

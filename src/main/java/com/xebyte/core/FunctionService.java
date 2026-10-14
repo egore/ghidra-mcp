@@ -2795,10 +2795,10 @@ Map<String, Object> out = new LinkedHashMap<>();
                         if (renamed instanceof Response.Err error) {
                             throw new Refusal(error.message());
                         }
-                        if (renamed instanceof Response.Ok ok && ok.data() instanceof Map<?, ?> data
-                                && "rejected".equals(data.get("status"))) {
+                        if (renamed instanceof Response.Ok ok && ok.data() instanceof Map<?, ?> renamedData
+                                && "rejected".equals(renamedData.get("status"))) {
                             Map<String, Object> rejected = new LinkedHashMap<>();
-                            data.forEach((key, value) -> rejected.put(String.valueOf(key), value));
+                            renamedData.forEach((key, value) -> rejected.put(String.valueOf(key), value));
                             return rejected;
                         }
                     }

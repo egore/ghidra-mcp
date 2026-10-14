@@ -1070,7 +1070,7 @@ public class DataTypeService {
     public Response clearData(
             @Param(value = "address", source = ParamSource.BODY, paramType = "address", description = "Start address or an address within a data item") Address address,
             @Param(value = "size", source = ParamSource.BODY, defaultValue = "0", description = "Positive byte count, or 0 to clear the containing data item") int size,
-            @Param(value = "program", defaultValue = "", description = "Target program name") Program program) {
+            @Param(value = "program", defaultValue = "") Program program) {
         if (size < 0) return Response.err("size must be nonnegative");
         try {
             return threadingStrategy.executeWrite(program, "Clear data", () -> {
@@ -1424,7 +1424,7 @@ public class DataTypeService {
             }
         }
 
-        Response created = createStruct(name, fieldsJson, false, program);
+        Response created = createStruct(name, fieldsJson, false, program, "");
 
         // Verify the create actually landed; if not, restore the original we deleted so the
         // operation is net-zero rather than destructive.

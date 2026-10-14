@@ -244,12 +244,25 @@ public class AnnotationScanner {
             ServiceUtils.clearResolvedProgramName();
             try {
                 Object[] args = new Object[bindings.length];
+                IllegalArgumentException bindFailure = null;
                 for (int i = 0; i < bindings.length; i++) {
-                    if (bindings[i] != null) {
+                    if (bindings[i] == null) {
+                        continue;
+                    }
+                    // A malformed value is reported after the program and entities resolve,
+                    // so a missing program is still the first thing a caller hears about.
+                    try {
                         args[i] = resolveParam(bindings[i], query, body);
+                    } catch (IllegalArgumentException e) {
+                        if (bindFailure == null) {
+                            bindFailure = e;
+                        }
                     }
                 }
                 Function resolvedFunction = EntityParams.resolve(bindings, args, programProvider);
+                if (bindFailure != null) {
+                    throw bindFailure;
+                }
 
                 // Dry-run support: wrap POST endpoints in a transaction that always rolls back.
                 // Must check BOTH the query string and the JSON body -- this project's own

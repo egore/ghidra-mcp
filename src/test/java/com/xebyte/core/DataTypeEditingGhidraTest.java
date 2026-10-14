@@ -14,6 +14,7 @@ public class DataTypeEditingGhidraTest {
     private ProgramBuilder builder;
     private ProgramDB program;
     private DataTypeService service;
+    private HeadlessProgramProvider scannerProvider;
     @BeforeClass public static void initialize() throws Exception { OverrideServiceGhidraTest.initialize(); }
     @Before public void setUp() throws Exception {
         builder = new ProgramBuilder("type-editing", ProgramBuilder._X86, "windows", this);
@@ -21,7 +22,9 @@ public class DataTypeEditingGhidraTest {
         builder.createMemory(".data", "0x1000", 256);
         HeadlessProgramProvider provider = new HeadlessProgramProvider();
         provider.setCurrentProgram(program);
+        provider.trackOpenProgram(program);
         service = new DataTypeService(provider, new DirectThreadingStrategy());
+        scannerProvider = provider;
     }
     @After public void tearDown() { builder.dispose(); }
     private static void ok(Response response) { assertTrue(response.toJson(), response instanceof Response.Ok); }
@@ -95,9 +98,7 @@ public class DataTypeEditingGhidraTest {
         String fields = "[{\"name\":\"value\",\"type\":\"uint\"}]";
         ok(service.createStruct("S", fields, false, program, "/Types"));
         ok(service.createStruct("S", fields, false, program, "/Other"));
-        HeadlessProgramProvider provider = new HeadlessProgramProvider();
-        provider.setCurrentProgram(program);
-        EndpointDef endpoint = new AnnotationScanner(new CommentService(provider, new DirectThreadingStrategy())).getEndpoints().stream()
+        EndpointDef endpoint = new AnnotationScanner(scannerProvider, new CommentService(scannerProvider, new DirectThreadingStrategy())).getEndpoints().stream()
             .filter(e -> e.path().equals("/set_comment")).findFirst().orElseThrow();
         ok(endpoint.handler().handle(java.util.Map.of(), java.util.Map.of("type", "struct", "struct_name", "/Other/S", "comment", "Other description")));
         assertEquals("Other description", program.getDataTypeManager().getDataType("/Other/S").getDescription());
@@ -131,11 +132,11 @@ public class DataTypeEditingGhidraTest {
 
     @Test public void enumArrayInputUnionDetailsAndKindSearch() {
         ok(service.createEnum("Mode", "[{\"name\":\"MODE_A\",\"value\":1}]", 4, program, "/Types"));
-        ok(service.createUnion("U", "[{\"name\":\"bytes\",\"type\":\"uchar[4]\"},{\"name\":\"number\",\"type\":\"uint\"}]", "", "/Types"));
-        String details = service.getTypeSize("U", "").toJson();
+        ok(service.createUnion("U", "[{\"name\":\"bytes\",\"type\":\"uchar[4]\"},{\"name\":\"number\",\"type\":\"uint\"}]", program, "/Types"));
+        String details = service.getTypeSize("U", program).toJson();
         assertTrue(details, details.contains("\"fields\""));
         assertTrue(details, details.contains("\"size\":4"));
-        String search = service.findDataTypes("", "", "union", false, 0, 100, "").toJson();
+        String search = service.findDataTypes("", "", "union", false, 0, 100, program).toJson();
         assertTrue(search, search.contains("/Types/U"));
         assertFalse(search, search.contains("/Types/Mode"));
     }
@@ -216,7 +217,7 @@ public class DataTypeEditingGhidraTest {
         String fields = "[{\"name\":\"value\",\"type\":\"uint\"}]";
         ok(service.createStruct("S", fields, false, program, "/Types"));
         ok(service.createStruct("S", fields, false, program, "/Other"));
-        ok(service.addStructField("/Other/S", "tail", "uint", -1, program));
+        ok(service.addStructField("/Other/S", "tail", "uint", -1, program, "[]", false));
         assertEquals(4, structure().getLength());
         assertEquals(8, program.getDataTypeManager().getDataType("/Other/S").getLength());
         assertTrue(service.getTypeSize("/Other/S", program).toJson().contains("\"size\":8"));
@@ -229,7 +230,7 @@ public class DataTypeEditingGhidraTest {
     }
 
     @Test public void decodedHttpNumbersKeepIntegralOffsetsAndSizes() throws Exception {
-        EndpointDef endpoint = new AnnotationScanner(service).getEndpoints().stream()
+        EndpointDef endpoint = new AnnotationScanner(scannerProvider, service).getEndpoints().stream()
             .filter(e -> e.path().equals("/create_struct")).findFirst().orElseThrow();
         String body = "{\"name\":\"S\",\"category_path\":\"/Types\",\"fields\":[{\"name\":\"value\",\"type\":\"uint\",\"offset\":4,\"size\":4}]}";
         ok(endpoint.handler().handle(java.util.Map.of(), JsonHelper.parseBody(new java.io.ByteArrayInputStream(body.getBytes(java.nio.charset.StandardCharsets.UTF_8)))));

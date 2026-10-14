@@ -207,7 +207,6 @@ public class SymbolLabelService {
         }
         return found;
     }
-    }
 
     // rename_label merged into rename_symbol(kind=label) in 7.0.0; kept as a helper.
     public Response renameLabel(
@@ -498,7 +497,7 @@ public class SymbolLabelService {
             } else {
                 // This is a label (code address) — validate snake_case
                 conventions = NamingConventions.validateLabelName(newName);
-                Response result = createLabel(addressStr, newName, null, program);
+                Response result = createLabel(addressStr, newName, null, program, false, "");
                 if (!conventions.isEmpty() && result instanceof Response.Ok okResp) {
                     @SuppressWarnings("unchecked")
                     java.util.Map<String, Object> okData = okResp.data() instanceof java.util.Map

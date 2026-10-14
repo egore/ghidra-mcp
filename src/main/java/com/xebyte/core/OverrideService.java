@@ -24,20 +24,18 @@ public class OverrideService {
         this.threading = threading;
     }
 
-    private Response execute(String programName, String transaction, Operation operation) {
-        ServiceUtils.ProgramOrError pe = ServiceUtils.getProgramOrError(provider, programName);
-        if (pe.hasError()) return pe.error();
+    private Response execute(Program program, String transaction, Operation operation) {
         try {
-            Callable<Response> action = () -> Response.ok(operation.apply(pe.program()));
+            Callable<Response> action = () -> Response.ok(operation.apply());
             return transaction == null ? threading.executeRead(action)
-                : threading.executeWrite(pe.program(), transaction, action);
+                : threading.executeWrite(program, transaction, action);
         } catch (Exception e) {
             return Response.err(e.getMessage());
         }
     }
 
     @FunctionalInterface
-    private interface Operation { Object apply(Program program) throws Exception; }
+    private interface Operation { Object apply() throws Exception; }
 
     static Address requireAddress(Program program, String value) {
         if (value == null || value.isBlank()) throw new IllegalArgumentException("Address is required");
@@ -63,8 +61,8 @@ public class OverrideService {
     public Response setFunctionCallingConvention(
             @Param(value = "function_address", source = ParamSource.BODY, paramType = "address", description = "Exact function entry address, optionally space-qualified") String address,
             @Param(value = "calling_convention", source = ParamSource.BODY, description = "Supported convention from list_calling_conventions, default, or an unprefixed alias") String convention,
-            @Param(value = "program", defaultValue = "", description = "Target program name") String programName) {
-        return execute(programName, "Set function calling convention", program -> {
+            @Param(value = "program", defaultValue = "") Program program) {
+        return execute(program, "Set function calling convention", () -> {
             Address entry = requireAddress(program, address);
             Function function = program.getFunctionManager().getFunctionAt(entry);
             if (function == null) throw new IllegalArgumentException("No function at entry address " + entry);
@@ -78,8 +76,8 @@ public class OverrideService {
     @McpTool(path = "/get_stack_depth_change", description = "Read an explicit instruction stack-depth override, not inferred depth or callee stack purge. has_override=false means none exists.", category = "function", access = ToolAccess.READ_ONLY)
     public Response getStackDepthChange(
             @Param(value = "address", paramType = "address", description = "Instruction address; stale overrides can also be inspected") String address,
-            @Param(value = "program", defaultValue = "", description = "Target program name") String programName) {
-        return execute(programName, null, program -> {
+            @Param(value = "program", defaultValue = "") Program program) {
+        return execute(program, null, () -> {
             Address at = requireAddress(program, address);
             Integer change = CallDepthChangeInfo.getStackDepthChange(program, at);
             return JsonHelper.mapOf("address", at.toString(), "has_override", change != null, "stack_depth_change", change);
@@ -90,8 +88,8 @@ public class OverrideService {
     public Response setStackDepthChange(
             @Param(value = "address", source = ParamSource.BODY, paramType = "address", description = "Exact instruction address") String address,
             @Param(value = "stack_depth_change", source = ParamSource.BODY, description = "Signed 32-bit byte delta, including zero") int change,
-            @Param(value = "program", defaultValue = "", description = "Target program name") String programName) {
-        return execute(programName, "Set stack depth change", program -> {
+            @Param(value = "program", defaultValue = "") Program program) {
+        return execute(program, "Set stack depth change", () -> {
             Address at = requireAddress(program, address);
             if (program.getListing().getInstructionAt(at) == null) throw new IllegalArgumentException("No instruction at " + at);
             CallDepthChangeInfo.setStackDepthChange(program, at, change);
@@ -102,8 +100,8 @@ public class OverrideService {
     @McpTool(path = "/remove_stack_depth_change", method = "POST", description = "Remove an explicit stack-depth override, restoring inferred behavior. Also removes stale overrides after an instruction has been cleared.", category = "function", access = ToolAccess.WRITE)
     public Response removeStackDepthChange(
             @Param(value = "address", source = ParamSource.BODY, paramType = "address", description = "Address of the override, including a cleared instruction") String address,
-            @Param(value = "program", defaultValue = "", description = "Target program name") String programName) {
-        return execute(programName, "Remove stack depth change", program -> {
+            @Param(value = "program", defaultValue = "") Program program) {
+        return execute(program, "Remove stack depth change", () -> {
             Address at = requireAddress(program, address);
             boolean removed = CallDepthChangeInfo.removeStackDepthChange(program, at);
             return JsonHelper.mapOf("status", "success", "address", at.toString(), "removed", removed);
@@ -140,8 +138,8 @@ public class OverrideService {
     @McpTool(path = "/get_call_site_prototype", description = "Read a localized prototype override at an exact direct/indirect CALL instruction, not the callee entry or its normal signature.", category = "function", access = ToolAccess.READ_ONLY)
     public Response getCallSitePrototype(
             @Param(value = "call_address", paramType = "address", description = "Exact CALL instruction address") String address,
-            @Param(value = "program", defaultValue = "", description = "Target program name") String programName) {
-        return execute(programName, null, program -> {
+            @Param(value = "program", defaultValue = "") Program program) {
+        return execute(program, null, () -> {
             Address at = requireAddress(program, address);
             Function caller = requireCaller(program, at);
             DataTypeSymbol override = findOverride(caller, at);
@@ -155,8 +153,8 @@ public class OverrideService {
     public Response setCallSitePrototype(
             @Param(value = "call_address", source = ParamSource.BODY, paramType = "address", description = "Exact CALL instruction address, not callee entry") String address,
             @Param(value = "prototype", source = ParamSource.BODY, description = "Full C declaration, with optional calling convention and varargs") String prototype,
-            @Param(value = "program", defaultValue = "", description = "Target program name") String programName) {
-        return execute(programName, "Set call-site prototype", program -> {
+            @Param(value = "program", defaultValue = "") Program program) {
+        return execute(program, "Set call-site prototype", () -> {
             if (prototype == null || prototype.isBlank()) throw new IllegalArgumentException("Prototype is required");
             Address at = requireAddress(program, address);
             Function caller = requireCaller(program, at);

@@ -193,7 +193,7 @@ instead of through `Atomic*` holders; responses are unchanged.
 
 ## v7.0.0 - 2026-10-21 — major: tool consolidation, JSON response contract, MCP conformance suite, an offline test tier, and a release gate that can actually block
 
-**209 tools** — 205 served by the GUI plugin, 190 by the headless server, 186
+**210 tools** — 206 served by the GUI plugin, 191 by the headless server, 187
 by both. The advertised surface went from 272 → 251 in the first consolidation
 cycle, then 253 after `/list_shadowed_globals` and `/batch_get_comments` (the
 7.0.0-rc.1 catalog). After rc.1 it went to 245 once `/get_functions` replaced
@@ -203,8 +203,9 @@ folds, 211 once both servers shared one set of program-operation names
 `/health` retired), 209 once version control and the CodeBrowser tools
 became shared services (`/server/version_control/checkin` and
 `/tool/launch_codebrowser` retired), 210 with `/set_memory_block`, and **209** once `/apply_documentation` replaced
-`/apply_function_documentation` and `/batch_apply_documentation` — 53 tools
-removed and 9 added since rc.1,
+`/apply_function_documentation` and `/batch_apply_documentation`, and **210** after
+`/clear_data` — 53 tools
+removed and 10 added since rc.1,
 every one named in
 [`MIGRATION_7.0.0_TOOL_CONSOLIDATION.md`](docs/project-management/MIGRATION_7.0.0_TOOL_CONSOLIDATION.md).
 

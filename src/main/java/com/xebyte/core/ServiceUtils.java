@@ -16,6 +16,8 @@ import ghidra.program.model.symbol.SymbolType;
 import ghidra.util.Msg;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Shared static utility methods used by all service classes.
@@ -1451,13 +1453,53 @@ public final class ServiceUtils {
         }
     }
 
+    /** A whole-word {@code const} or {@code volatile}, plus the whitespace that follows it. */
+    private static final Pattern TYPE_QUALIFIER_PATTERN =
+            Pattern.compile("(?<![\\w$])(?:const|volatile)(?![\\w$])\\s*");
+
+    /**
+     * Drops the C {@code const} and {@code volatile} qualifiers from a type or prototype string.
+     *
+     * <p>Ghidra data types do not carry cv-qualifiers, so neither the signature parser nor
+     * {@link #resolveDataType} understands {@code const char *} (it fails with "Can't resolve
+     * datatype"). Matching is on whole words, so {@code const_value} and {@code constant} are
+     * untouched, and it covers every placement: {@code const char *}, {@code char const *},
+     * {@code char * const}.
+     *
+     * @return the text without qualifiers and with whitespace normalised, or {@code text}
+     *         itself (same instance) when it had none
+     */
+    public static String stripTypeQualifiers(String text) {
+        if (text == null) {
+            return null;
+        }
+        Matcher m = TYPE_QUALIFIER_PATTERN.matcher(text);
+        if (!m.find()) {
+            return text;
+        }
+        return m.replaceAll("").replaceAll("\\s+", " ").trim();
+    }
+
     /**
      * Resolves a data type by name, handling common types, pointer types, and array types.
+     * A name that does not resolve as written is retried once without {@code const}/{@code volatile}
+     * (see {@link #stripTypeQualifiers}), so an exact match on a type whose name really contains
+     * one of those words, such as a demangled {@code Foo<char const *>}, still wins.
      * @param dtm The data type manager
      * @param typeName The type name to resolve
      * @return The resolved DataType, or null if not found
      */
     public static DataType resolveDataType(DataTypeManager dtm, String typeName) {
+        DataType resolved = resolveDataTypeGuarded(dtm, typeName);
+        if (resolved != null) {
+            return resolved;
+        }
+        String stripped = stripTypeQualifiers(typeName);
+        return stripped == null || stripped.equals(typeName)
+                ? null : resolveDataTypeGuarded(dtm, stripped);
+    }
+
+    private static DataType resolveDataTypeGuarded(DataTypeManager dtm, String typeName) {
         try {
             return resolveDataTypeInternal(dtm, typeName);
         } catch (IllegalArgumentException e) {

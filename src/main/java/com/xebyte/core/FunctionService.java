@@ -1102,6 +1102,7 @@ Map<String, Object> out = new LinkedHashMap<>();
         // Use ApplyFunctionSignatureCmd to parse and apply the signature
         WriteTx txProto = WriteTx.begin(program, "Set function prototype");
         boolean signatureApplied = false;
+        boolean qualifiersIgnored = false;
         try {
             // Get data type manager
             DataTypeManager dtm = program.getDataTypeManager();
@@ -1111,8 +1112,21 @@ Map<String, Object> out = new LinkedHashMap<>();
             ghidra.app.util.parser.FunctionSignatureParser parser =
                 new ghidra.app.util.parser.FunctionSignatureParser(dtm, null);
 
-            // Parse the prototype into a function signature
-            ghidra.program.model.data.FunctionDefinitionDataType sig = parser.parse(null, prototype);
+            // Parse the prototype into a function signature. Ghidra's parser rejects
+            // const/volatile ("Can't resolve datatype: const char *"), so when the
+            // prototype as written fails, retry once without them.
+            ghidra.program.model.data.FunctionDefinitionDataType sig;
+            try {
+                sig = parser.parse(null, prototype);
+            } catch (Exception first) {
+                String stripped = ServiceUtils.stripTypeQualifiers(prototype);
+                if (stripped.equals(prototype)) {
+                    throw first;
+                }
+                sig = parser.parse(null, stripped);
+                qualifiersIgnored = true;
+                Msg.info(this, "Parsed prototype after dropping const/volatile: " + stripped);
+            }
 
             if (sig == null) {
                 String msg = "Failed to parse function prototype";
@@ -1152,6 +1166,9 @@ Map<String, Object> out = new LinkedHashMap<>();
             boolean conventionApplied = false;
             try {
                 conventionApplied = applyCallingConvention(program, addr, callingConvention, errorMessage);
+                if (conventionApplied && qualifiersIgnored) {
+                    errorMessage.append(QUALIFIERS_IGNORED_NOTE);
+                }
                 return conventionApplied;
             } catch (Exception e) {
                 String msg = "Error in calling convention transaction: " + ServiceUtils.failureMessage(e);
@@ -1162,8 +1179,15 @@ Map<String, Object> out = new LinkedHashMap<>();
                 txConv.end(conventionApplied);
             }
         }
+        if (signatureApplied && qualifiersIgnored) {
+            errorMessage.append(QUALIFIERS_IGNORED_NOTE);
+        }
         return signatureApplied;
     }
+
+    /** Surfaced as a warning on success; {@code setFunctionPrototypeEndpoint} splits the buffer by line. */
+    private static final String QUALIFIERS_IGNORED_NOTE =
+            "const/volatile qualifiers were dropped from the prototype: Ghidra data types do not carry them.";
 
     /**
      * Apply a calling convention to a function at the given address.

@@ -3,6 +3,7 @@ package com.xebyte.core;
 import com.xebyte.headless.DirectThreadingStrategy;
 import com.xebyte.headless.HeadlessProgramProvider;
 import ghidra.GhidraApplicationLayout;
+import ghidra.app.cmd.function.CallDepthChangeInfo;
 import ghidra.framework.Application;
 import ghidra.framework.ApplicationConfiguration;
 import ghidra.program.database.ProgramBuilder;
@@ -104,6 +105,42 @@ public class OverrideServiceGhidraTest {
         assertTrue(schema.contains("set_stack_depth_change"));
         assertTrue(schema.contains("call_address"));
         assertTrue(schema.contains("program"));
+    }
+
+    @Test public void stackDeltaBindingRejectsLossyAndMissingValuesWithoutWriting() throws Exception {
+        AnnotationScanner scanner = new AnnotationScanner(provider, service);
+        EndpointDef endpoint = scanner.getEndpoints().stream()
+            .filter(e -> e.path().equals("/set_stack_depth_change")).findFirst().orElseThrow();
+        for (Object invalid : List.of(1.5, 2147483648L, -2147483649L, "junk")) {
+            Response response = endpoint.handler().handle(Map.of(),
+                Map.of("address", "0x1000", "stack_depth_change", invalid));
+            assertTrue(response.toJson(), response instanceof Response.Err);
+            assertNull(CallDepthChangeInfo.getStackDepthChange(program, builder.addr("0x1000")));
+        }
+        Response missing = endpoint.handler().handle(Map.of(), Map.of("address", "0x1000"));
+        assertTrue(missing.toJson(), missing instanceof Response.Err);
+        assertNull(CallDepthChangeInfo.getStackDepthChange(program, builder.addr("0x1000")));
+        for (int delta : new int[] {0, Integer.MIN_VALUE, Integer.MAX_VALUE}) {
+            ok(endpoint.handler().handle(Map.of(), Map.of("address", "0x1000", "stack_depth_change", delta)));
+            assertEquals(Integer.valueOf(delta),
+                CallDepthChangeInfo.getStackDepthChange(program, builder.addr("0x1000")));
+        }
+    }
+
+    @Test public void replacingOneCallSiteLeavesAnotherCallToTheSameCalleeUnchanged() throws Exception {
+        builder.setBytes("0x1040", "e8 bb 0f 00 00 e8 b6 0f 00 00 c3");
+        builder.disassemble("0x1040", 11);
+        builder.createFunction("0x1040");
+        ok(service.setCallSitePrototype("0x1040", "int first(int n)", program));
+        assertTrue(service.getCallSitePrototype("0x1045", program).toJson().contains("\"has_override\":false"));
+        ok(service.setCallSitePrototype("0x1045", "void second(char *buf)", program));
+        String second = service.getCallSitePrototype("0x1045", program).toJson();
+        ok(service.setCallSitePrototype("0x1040", "void replacement(void)", program));
+        assertEquals(second, service.getCallSitePrototype("0x1045", program).toJson());
+        String first = service.getCallSitePrototype("0x1040", program).toJson();
+        assertTrue(service.setCallSitePrototype("0x1040", "not a declaration", program) instanceof Response.Err);
+        assertEquals(first, service.getCallSitePrototype("0x1040", program).toJson());
+        assertEquals(second, service.getCallSitePrototype("0x1045", program).toJson());
     }
 
     @Test public void indirectCallVarargsAndSignedStackLimits() {

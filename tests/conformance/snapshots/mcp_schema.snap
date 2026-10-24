@@ -166,6 +166,62 @@
       "read_only": false
     },
     {
+      "category": "function",
+      "category_description": "Decompile, rename, prototype, variables, batch rename, create/delete functions",
+      "description": "Apply Ghidra's Adjust Pointer Offset to a pointer variable, including 'this'. Creates a pointer typedef with a component offset so decompilation can render ADJ(pointer). The offset is the pointer's signed byte displacement from the start of base_type, NOT the adjustment instruction's delta. Preserves pointer width and storage. An implicit auto-parameter requires custom storage; this function-wide change is reported. Existing typedefs with different settings are rejected, not overwritten.",
+      "destructive": false,
+      "method": "POST",
+      "params": [
+        {
+          "description": "Function entry address (0x<hex> or <space>:<hex>).",
+          "name": "function_address",
+          "param_type": "address",
+          "required": true,
+          "source": "body",
+          "type": "string"
+        },
+        {
+          "description": "Pointer local or parameter name exactly as shown by the decompiler, including 'this'.",
+          "name": "variable_name",
+          "required": true,
+          "source": "body",
+          "type": "string"
+        },
+        {
+          "description": "Containing data type, not a pointer; use a full category path to disambiguate. For a secondary base at byte 36, use the complete object type.",
+          "name": "base_type",
+          "required": true,
+          "source": "body",
+          "type": "string"
+        },
+        {
+          "description": "Signed byte displacement from the containing object start, decimal or hex (36 or 0x24). For this -= 36, pass positive 36. Zero creates an unshifted pointer typedef.",
+          "name": "component_offset",
+          "required": true,
+          "source": "body",
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Reusable pointer typedef name. Omit for a name derived from the containing type, offset and pointer width. Created in base_type's category.",
+          "name": "name",
+          "required": false,
+          "source": "body",
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Target program: its project path (/folder/name) or a name unique in the project; it is opened on first use. Omit it only when exactly one program is open.",
+          "name": "program",
+          "required": false,
+          "source": "query",
+          "type": "string"
+        }
+      ],
+      "path": "/adjust_pointer_offset",
+      "read_only": false
+    },
+    {
       "category": "program",
       "category_description": "Program management, script execution, memory read, bookmarks, save",
       "description": "Get auto-analysis status for open programs",
@@ -4537,6 +4593,33 @@
       "read_only": true
     },
     {
+      "category": "function",
+      "category_description": "Calling convention, stack-depth and localized call prototype overrides",
+      "description": "Read an explicit instruction stack-depth override, not inferred depth or callee stack purge. has_override=false means none exists.",
+      "destructive": false,
+      "method": "GET",
+      "params": [
+        {
+          "description": "Instruction address; stale overrides can also be inspected",
+          "name": "address",
+          "param_type": "address",
+          "required": true,
+          "source": "query",
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Target program: its project path (/folder/name) or a name unique in the project; it is opened on first use. Omit it only when exactly one program is open.",
+          "name": "program",
+          "required": false,
+          "source": "query",
+          "type": "string"
+        }
+      ],
+      "path": "/get_stack_depth_change",
+      "read_only": true
+    },
+    {
       "category": "datatype",
       "category_description": "Struct/enum/union CRUD, apply data types, type conflicts, validation",
       "description": "Get structure field layout",
@@ -6054,6 +6137,33 @@
       "read_only": false
     },
     {
+      "category": "function",
+      "category_description": "Calling convention, stack-depth and localized call prototype overrides",
+      "description": "Remove an explicit stack-depth override, restoring inferred behavior. Also removes stale overrides after an instruction has been cleared.",
+      "destructive": false,
+      "method": "POST",
+      "params": [
+        {
+          "description": "Address of the override, including a cleared instruction",
+          "name": "address",
+          "param_type": "address",
+          "required": true,
+          "source": "body",
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Target program: its project path (/folder/name) or a name unique in the project; it is opened on first use. Omit it only when exactly one program is open.",
+          "name": "program",
+          "required": false,
+          "source": "query",
+          "type": "string"
+        }
+      ],
+      "path": "/remove_stack_depth_change",
+      "read_only": false
+    },
+    {
       "category": "datatype",
       "category_description": "Struct/enum/union CRUD, apply data types, type conflicts, validation",
       "description": "Remove a field from a structure (by the name you created it with, even after Hungarian auto-prefixing).",
@@ -7038,6 +7148,40 @@
       "read_only": false
     },
     {
+      "category": "function",
+      "category_description": "Calling convention, stack-depth and localized call prototype overrides",
+      "description": "Set/replace a prototype override for ONE direct or indirect CALL. The declaration name is a placeholder, not a rename. Caller/callee signatures and other call sites remain unchanged.",
+      "destructive": false,
+      "method": "POST",
+      "params": [
+        {
+          "description": "Exact CALL instruction address, not callee entry",
+          "name": "call_address",
+          "param_type": "address",
+          "required": true,
+          "source": "body",
+          "type": "string"
+        },
+        {
+          "description": "Full C declaration, with optional calling convention and varargs",
+          "name": "prototype",
+          "required": true,
+          "source": "body",
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Target program: its project path (/folder/name) or a name unique in the project; it is opened on first use. Omit it only when exactly one program is open.",
+          "name": "program",
+          "required": false,
+          "source": "query",
+          "type": "string"
+        }
+      ],
+      "path": "/set_call_site_prototype",
+      "read_only": false
+    },
+    {
       "category": "comment",
       "category_description": "Set/get plate, decompiler, disassembly, repeatable comments",
       "description": "Set a listing comment of a given kind at ANY address (data or code). type = plate|pre|eol|post|repeatable (aliases: decompiler=pre, disassembly=eol). Plate writes surface structural warnings and flush the decompiler cache. Symmetric writer for get_comment; replaces the former set_plate_comment / set_decompiler_comment / set_disassembly_comment.",
@@ -7176,6 +7320,40 @@
         }
       ],
       "path": "/set_equate",
+      "read_only": false
+    },
+    {
+      "category": "function",
+      "category_description": "Calling convention, stack-depth and localized call prototype overrides",
+      "description": "Change only a function's calling convention at its exact entry address. Preserves its prototype and custom variable storage; Ghidra recomputes dynamic storage and implicit parameters. Accepts default and unprefixed aliases; call-site overrides are unchanged.",
+      "destructive": false,
+      "method": "POST",
+      "params": [
+        {
+          "description": "Exact function entry address, optionally space-qualified",
+          "name": "function_address",
+          "param_type": "address",
+          "required": true,
+          "source": "body",
+          "type": "string"
+        },
+        {
+          "description": "Supported convention from list_calling_conventions, default, or an unprefixed alias",
+          "name": "calling_convention",
+          "required": true,
+          "source": "body",
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Target program: its project path (/folder/name) or a name unique in the project; it is opened on first use. Omit it only when exactly one program is open.",
+          "name": "program",
+          "required": false,
+          "source": "query",
+          "type": "string"
+        }
+      ],
+      "path": "/set_function_calling_convention",
       "read_only": false
     },
     {
@@ -7599,6 +7777,40 @@
         }
       ],
       "path": "/set_property",
+      "read_only": false
+    },
+    {
+      "category": "function",
+      "category_description": "Calling convention, stack-depth and localized call prototype overrides",
+      "description": "Set an explicit signed 32-bit stack-pointer byte delta at an exact instruction address. Zero is a valid override; this is not an absolute stack depth.",
+      "destructive": false,
+      "method": "POST",
+      "params": [
+        {
+          "description": "Exact instruction address",
+          "name": "address",
+          "param_type": "address",
+          "required": true,
+          "source": "body",
+          "type": "string"
+        },
+        {
+          "description": "Signed 32-bit byte delta, including zero",
+          "name": "stack_depth_change",
+          "required": true,
+          "source": "body",
+          "type": "integer"
+        },
+        {
+          "default": "",
+          "description": "Target program: its project path (/folder/name) or a name unique in the project; it is opened on first use. Omit it only when exactly one program is open.",
+          "name": "program",
+          "required": false,
+          "source": "query",
+          "type": "string"
+        }
+      ],
+      "path": "/set_stack_depth_change",
       "read_only": false
     },
     {

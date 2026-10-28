@@ -7,7 +7,12 @@ import ghidra.program.database.ProgramDB;
 import ghidra.program.model.data.*;
 import ghidra.program.model.listing.*;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.GhidraApplicationLayout;
+import ghidra.framework.Application;
+import ghidra.framework.ApplicationConfiguration;
 import org.junit.*;
+import java.io.File;
+import static org.junit.Assume.assumeTrue;
 import static org.junit.Assert.*;
 
 public class DataTypeEditingGhidraTest {
@@ -15,7 +20,15 @@ public class DataTypeEditingGhidraTest {
     private ProgramDB program;
     private DataTypeService service;
     private HeadlessProgramProvider scannerProvider;
-    @BeforeClass public static void initialize() throws Exception { OverrideServiceGhidraTest.initialize(); }
+    @BeforeClass public static void initialize() throws Exception {
+        String installDir = System.getenv("GHIDRA_INSTALL_DIR");
+        assumeTrue("GHIDRA_INSTALL_DIR is required for real Ghidra tests", installDir != null && !installDir.isBlank());
+        if (!Application.isInitialized()) {
+            ApplicationConfiguration configuration = new ApplicationConfiguration();
+            configuration.setInitializeLogging(false);
+            Application.initializeApplication(new GhidraApplicationLayout(new File(installDir)), configuration);
+        }
+    }
     @Before public void setUp() throws Exception {
         builder = new ProgramBuilder("type-editing", ProgramBuilder._X86, "windows", this);
         program = builder.getProgram();

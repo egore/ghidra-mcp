@@ -11,8 +11,8 @@ For the release preparation runbook, see
 
 ### v7.1.0 (Latest) — Ghidra 12.2, decompiler symbols and equates, function resources, the decompilation tree
 
-The catalog stands at **220 tools** — 216 served by the GUI plugin, 201 by the headless
-server, 197 by both. **Requires Ghidra 12.2 and Java 25**; shared projects need a
+The catalog stands at **228 tools** — 224 served by the GUI plugin, 209 by the headless
+server, 205 by both. **Requires Ghidra 12.2 and Java 25**; shared projects need a
 one-time TLS trust and database upgrade (see the README). Alongside the fixes listed
 in [CHANGELOG.md](../../CHANGELOG.md) (connect_instance errors and project checks,
 create_project paths, decompiler start-up failures, unbound Unix sockets, variable

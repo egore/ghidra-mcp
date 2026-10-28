@@ -18,7 +18,7 @@ public class BatchEditingGhidraTest {
     private CommentService comments;
     private AnalysisService analysis;
     private HeadlessProgramProvider provider;
-    @BeforeClass public static void initialize() throws Exception { OverrideServiceGhidraTest.initialize(); }
+    @BeforeClass public static void initialize() throws Exception { DataTypeEditingGhidraTest.initialize(); }
     @Before public void setUp() throws Exception {
         builder = new ProgramBuilder("batch-editing", ProgramBuilder._X86, "windows", this);
         program = builder.getProgram();
@@ -137,23 +137,6 @@ public class BatchEditingGhidraTest {
         assertEquals("Number of currently active players", program.getListing().getComment(ghidra.program.model.listing.CommentType.PLATE, builder.addr("0x1040")));
     }
 
-    @Test public void namespaceRenameDoesNotRenameAQualifiedFunction() throws Exception {
-        var function = program.getFunctionManager().getFunctionAt(builder.addr("0x1000"));
-        builder.withTransaction(() -> {
-            try {
-                Namespace outer = program.getSymbolTable().createNameSpace(program.getGlobalNamespace(), "Outer", SourceType.USER_DEFINED);
-                function.setParentNamespace(outer);
-                function.setName("GetOriginalValue", SourceType.USER_DEFINED);
-            } catch (Exception e) { throw new RuntimeException(e); }
-        });
-        Response response = symbols.renameSymbol("Outer::GetOriginalValue", "Get", "namespace", "", program, null);
-        assertTrue(response.toJson(), response instanceof Response.Err);
-        assertEquals("GetOriginalValue", function.getName());
-        var labelTool = new AnnotationScanner(symbols).getDescriptors().stream()
-            .filter(d -> d.path().equals("/create_label")).findFirst().orElseThrow();
-        assertTrue(labelTool.access().isDestructive());
-    }
-
     @Test public void clearDataRefusesToDestroyNamedGlobalsLikeTheOtherClearingWriters() {
         ok(types.applyDataType(builder.addr("0x1060"), "uchar[16]", false, program, null, List.of(), "g_abTable"));
         Response inside = types.clearData(builder.addr("0x1064"), 4, program);
@@ -176,5 +159,22 @@ public class BatchEditingGhidraTest {
         ok(types.applyDataType(builder.addr("0x1088"), "uint", false, program, null, List.of(), ""));
         ok(types.clearData(builder.addr("0x1080"), 16, program));
         assertNull(program.getListing().getDefinedDataAt(builder.addr("0x1088")));
+    }
+
+    @Test public void namespaceRenameDoesNotRenameAQualifiedFunction() throws Exception {
+        var function = program.getFunctionManager().getFunctionAt(builder.addr("0x1000"));
+        builder.withTransaction(() -> {
+            try {
+                Namespace outer = program.getSymbolTable().createNameSpace(program.getGlobalNamespace(), "Outer", SourceType.USER_DEFINED);
+                function.setParentNamespace(outer);
+                function.setName("GetOriginalValue", SourceType.USER_DEFINED);
+            } catch (Exception e) { throw new RuntimeException(e); }
+        });
+        Response response = symbols.renameSymbol("Outer::GetOriginalValue", "Get", "namespace", "", program, null);
+        assertTrue(response.toJson(), response instanceof Response.Err);
+        assertEquals("GetOriginalValue", function.getName());
+        var labelTool = new AnnotationScanner(symbols).getDescriptors().stream()
+            .filter(d -> d.path().equals("/create_label")).findFirst().orElseThrow();
+        assertTrue(labelTool.access().isDestructive());
     }
 }

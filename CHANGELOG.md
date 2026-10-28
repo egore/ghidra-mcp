@@ -266,6 +266,18 @@ Deploy now writes the plugin class and upgrades markers left by earlier deploys.
   Original contributions by @sagasm, credited as co-author on the squash commit;
   consolidation and regression fixes follow the maintainer review.
 
+### Fixed — `const` / `volatile` in prototypes and type names no longer fail the call
+
+`set_function_prototype` with `void __fastcall F(const char *s)` failed with
+`Can't resolve datatype: const char *`, because Ghidra's signature parser and data type
+lookup know nothing of C cv-qualifiers. When a prototype (or a type name passed to any tool
+that resolves one, e.g. `set_variable_type`) does not resolve as written, it is retried once
+with whole-word `const` / `volatile` removed in any position (`const char *`, `char const *`,
+`char * const`). Names that resolve as written are untouched, so a type literally named
+`Foo<char const *>` still matches exactly, and a genuinely unknown type still fails, now
+naming the unqualified type. A prototype that needed the retry succeeds with a warning that
+the qualifiers were dropped.
+
 ### Fixed — integer and object-array parameters no longer bind lossily
 
 - `int` parameters reject fractional, out-of-range and missing required values
@@ -387,6 +399,25 @@ routed through the server's threading strategy, not filesystem-only.
   Read-only; it does not write Ghidra's Program Tree.
 - **`/find_type_users`** lists the functions whose decompilation references a data type,
   or one field of it.
+
+### Changed — type editing preserves layouts and references
+
+- Type creators accept a category path; struct/union members retain comments,
+  validate explicit sizes, and accept array/pointer types. A union member with an
+  unknown type fails the call instead of being skipped. Enum creation also accepts
+  an array of `{name,value}` objects.
+- Function signatures retain named parameters and calling conventions and update
+  in place; invalid parameters roll back. Identical typedef creation is a no-op
+  and conflicting typedefs are rejected.
+- Type resolution honors target ABI sizes and qualified category paths, rejects
+  unknown C pointer targets, and preserves placeholders if replacement fails.
+- `add_struct_field` now accepts atomic bulk `fields`, rejects defined-field
+  overlaps unless `overwrite=true`, and reuses undefined padding. Field removal
+  defaults to preserving layout (`shrink=true` explicitly shifts fields).
+- Type deletion checks users and applied data (including typedef/pointer
+  wrappers and function variables/returns) and refuses unless `force=true`.
+- `search_data_types` gains an optional kind filter and accepts an empty pattern;
+  `get_type_size` reports members, signatures and base types.
 
 ### Added — structure descriptions
 

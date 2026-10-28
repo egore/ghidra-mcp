@@ -1,10 +1,23 @@
 package com.xebyte.core;
 
+import ghidra.program.model.address.Address;
 import ghidra.program.model.listing.Program;
 import java.util.*;
 
 final class BatchOperations {
     private BatchOperations() {}
+
+    static Address requireAddress(Program program, String text) {
+        if (text == null || text.isBlank()) {
+            throw new IllegalArgumentException("Address is required");
+        }
+
+        Address address = ServiceUtils.parseAddress(program, text.trim());
+        if (address == null) {
+            throw new IllegalArgumentException(ServiceUtils.getLastParseError());
+        }
+        return address;
+    }
     @FunctionalInterface interface Operation { Response apply(Map<String, String> item) throws Exception; }
 
     static Response run(Program program, ThreadingStrategy threading, String name,

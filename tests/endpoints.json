@@ -562,7 +562,7 @@
         "gui",
         "headless"
       ],
-      "description": "Undefine data/code units without changing memory bytes. Without size, clears the entire containing data item. Explicit size clears intersecting code units; their full extents may exceed the requested range."
+      "description": "Undefine data/code units without changing memory bytes. Without size, clears the entire containing data item. Explicit size clears intersecting code units; their full extents may exceed the requested range. Refuses with type_would_evict when the range would clear a named global."
     },
     {
       "path": "/clear_flow_and_repair",
@@ -3250,21 +3250,6 @@
         "headless"
       ],
       "description": "Apply, remove or rename equates. Apply replaces other equate names for the same scalar at each selected operand, preserving different scalar values. Select one instruction with address or a function with function_address (name or containing address), never both. Remove with no scope selects references by name and/or value across the program. delete_definition requires name, refuses enum-owned definitions and refuses references outside the selection. Rename requires name and new_name, refuses duplicate names, and preserves every reference. max_hits caps all affected references before any mutation. dry_run previews via rollback."
-    },
-    {
-      "path": "/set_function_calling_convention",
-      "method": "POST",
-      "category": "function",
-      "params": [
-        "function_address",
-        "calling_convention",
-        "program"
-      ],
-      "servers": [
-        "gui",
-        "headless"
-      ],
-      "description": "Change only a function's calling convention at its exact entry address. Preserves its prototype and custom variable storage; Ghidra recomputes dynamic storage and implicit parameters. Accepts default and unprefixed aliases; call-site overrides are unchanged."
     },
     {
       "path": "/set_function_calling_convention",

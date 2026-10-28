@@ -11,8 +11,8 @@ For the release preparation runbook, see
 
 ### Unreleased
 
-The catalog stands at **220 tools** — 216 served by the GUI plugin, 201 by the headless
-server, 197 by both:
+The catalog stands at **228 tools** — 224 served by the GUI plugin, 209 by the headless
+server, 205 by both:
 
 - **Decompiler symbols and stack locals** from @sagasm (#550):
   `get_functions(fields=decompiler_symbols)` reads SSA/register storage, and

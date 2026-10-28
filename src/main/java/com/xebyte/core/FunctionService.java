@@ -1691,7 +1691,10 @@ Map<String, Object> out = new LinkedHashMap<>();
                 final int pointerSize = current.getLength();
                 return threadingStrategy.executeWrite(program, "Adjust pointer offset", () -> {
                     DataTypeManager dtm = program.getDataTypeManager();
-                    DataType parent = ServiceUtils.resolveDataType(dtm, baseType);
+                    DataType parent = baseType.startsWith("/") ? dtm.getDataType(baseType) : null;
+                    if (parent == null) {
+                        parent = ServiceUtils.resolveDataType(dtm, baseType);
+                    }
                     if (parent == null) throw new IllegalArgumentException("Could not resolve base type: " + baseType);
                     DataType unwrapped = parent instanceof TypeDef typedef ? typedef.getBaseDataType() : parent;
                     if (unwrapped instanceof Pointer || parent.getLength() <= 0) {

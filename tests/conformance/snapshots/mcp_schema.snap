@@ -1,5 +1,5 @@
 {
-  "count": 215,
+  "count": 222,
   "tools": [
     {
       "category": "function",
@@ -3952,6 +3952,33 @@
         }
       ],
       "path": "/get_assembly_context",
+      "read_only": true
+    },
+    {
+      "category": "function",
+      "category_description": "Calling convention, stack-depth and localized call prototype overrides",
+      "description": "Read a localized prototype override at an exact direct/indirect CALL instruction, not the callee entry or its normal signature.",
+      "destructive": false,
+      "method": "GET",
+      "params": [
+        {
+          "description": "Exact CALL instruction address",
+          "name": "call_address",
+          "param_type": "address",
+          "required": true,
+          "source": "query",
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Target program: its project path (/folder/name) or a name unique in the project; it is opened on first use. Omit it only when exactly one program is open.",
+          "name": "program",
+          "required": false,
+          "source": "query",
+          "type": "string"
+        }
+      ],
+      "path": "/get_call_site_prototype",
       "read_only": true
     },
     {

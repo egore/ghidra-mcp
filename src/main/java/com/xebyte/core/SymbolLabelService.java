@@ -279,7 +279,7 @@ public class SymbolLabelService {
             List<Map<String, String>> entries = labels != null && !labels.isEmpty() ? labels
                 : List.of(Map.of("address", addressStr == null ? "" : addressStr, "name", labelName == null ? "" : labelName));
             return BatchOperations.run(program, threadingStrategy, "Create primary/namespaced labels", entries, item -> {
-                Address at = OverrideService.requireAddress(program, item.get("address"));
+                Address at = BatchOperations.requireAddress(program, item.get("address"));
                 String name = item.get("name");
                 if (name == null || name.isBlank()) throw new IllegalArgumentException("Label name is required");
                 SymbolTable table = program.getSymbolTable();

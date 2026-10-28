@@ -852,7 +852,7 @@ public class DataTypeService {
                     }
                 }
 
-                if (convention != null && !convention.isBlank()) funcDef.setCallingConvention(OverrideService.resolveConvention(program, convention));
+                if (convention != null && !convention.isBlank()) funcDef.setCallingConvention(ServiceUtils.resolveCallingConvention(program, convention));
                 DataType addedFuncDef = existing != null ? funcDef : dtm.addDataType(funcDef, DataTypeConflictHandler.DEFAULT_HANDLER);
                 return new FunctionSignatureOutcome(addedFuncDef.getName(), paramCount, warnings);
             });
@@ -1066,23 +1066,38 @@ public class DataTypeService {
     }
 
 
-    @McpTool(path = "/clear_data", method = "POST", description = "Undefine data/code units without changing memory bytes. Without size, clears the entire containing data item. Explicit size clears intersecting code units; their full extents may exceed the requested range.", category = "datatype", access = ToolAccess.DESTRUCTIVE)
+    @McpTool(path = "/clear_data", method = "POST", description = "Undefine data/code units without changing memory bytes. Without size, clears the entire containing data item. Explicit size clears intersecting code units; their full extents may exceed the requested range. Refuses with type_would_evict when the range would clear a named global.", category = "datatype", access = ToolAccess.DESTRUCTIVE)
     public Response clearData(
             @Param(value = "address", source = ParamSource.BODY, paramType = "address", description = "Start address or an address within a data item") Address address,
             @Param(value = "size", source = ParamSource.BODY, defaultValue = "0", description = "Positive byte count, or 0 to clear the containing data item") int size,
             @Param(value = "program", defaultValue = "") Program program) {
         if (size < 0) return Response.err("size must be nonnegative");
+
+        final Address start;
+        final Address end;
+        try {
+            Listing listing = program.getListing();
+            Data containing = size == 0 ? listing.getDataContaining(address) : null;
+            if (containing != null) {
+                start = containing.getMinAddress();
+                end = containing.getMaxAddress();
+            } else {
+                start = address;
+                end = size == 0 ? address : address.addNoWrap(size - 1);
+            }
+        } catch (Exception e) {
+            return Response.err(e.getMessage());
+        }
+
+        // Same gate as set_global and apply_data_type: clearing code units destroys
+        // whole units, so a range inside or over a named global is refused.
+        Response rejected = evictionRejection(program, start, (int) end.subtract(start) + 1,
+            "clear_data", "Clearing this range");
+        if (rejected != null) return rejected;
+
         try {
             return threadingStrategy.executeWrite(program, "Clear data", () -> {
-                Address start = address;
-                Listing listing = program.getListing();
-                Address end;
-                if (size == 0) {
-                    Data data = listing.getDataContaining(start);
-                    if (data != null) { start = data.getMinAddress(); end = data.getMaxAddress(); }
-                    else end = start;
-                } else end = start.addNoWrap(size - 1);
-                listing.clearCodeUnits(start, end, false);
+                program.getListing().clearCodeUnits(start, end, false);
                 return Response.ok(JsonHelper.mapOf("status", "success", "start", start.toString(), "end", end.toString()));
             });
         } catch (Exception e) { return Response.err(e.getMessage()); }

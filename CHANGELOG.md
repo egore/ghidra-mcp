@@ -57,6 +57,18 @@ APIs present in both 12.1 and 12.2.
   Original contributions by @sagasm; consolidation and regression fixes follow
   the maintainer review. Contributor commits are retained.
 
+### Fixed — `const` / `volatile` in prototypes and type names no longer fail the call
+
+`set_function_prototype` with `void __fastcall F(const char *s)` failed with
+`Can't resolve datatype: const char *`, because Ghidra's signature parser and data type
+lookup know nothing of C cv-qualifiers. When a prototype (or a type name passed to any tool
+that resolves one, e.g. `set_variable_type`) does not resolve as written, it is retried once
+with whole-word `const` / `volatile` removed in any position (`const char *`, `char const *`,
+`char * const`). Names that resolve as written are untouched, so a type literally named
+`Foo<char const *>` still matches exactly, and a genuinely unknown type still fails, now
+naming the unqualified type. A prototype that needed the retry succeeds with a warning that
+the qualifiers were dropped.
+
 ### Fixed — integer and object-array parameters no longer bind lossily
 
 - Integer parameters reject fractional, out-of-range and missing required values
@@ -162,6 +174,25 @@ routed through the server's threading strategy, not filesystem-only.
   Read-only; it does not write Ghidra's Program Tree.
 - **`/find_type_users`** lists the functions whose decompilation references a data type,
   or one field of it.
+
+### Changed — type editing preserves layouts and references
+
+- Type creators accept a category path; struct/union members retain comments,
+  validate explicit sizes, and accept array/pointer types. A union member with an
+  unknown type fails the call instead of being skipped. Enum creation also accepts
+  an array of `{name,value}` objects.
+- Function signatures retain named parameters and calling conventions and update
+  in place; invalid parameters roll back. Identical typedef creation is a no-op
+  and conflicting typedefs are rejected.
+- Type resolution honors target ABI sizes and qualified category paths, rejects
+  unknown C pointer targets, and preserves placeholders if replacement fails.
+- `add_struct_field` now accepts atomic bulk `fields`, rejects defined-field
+  overlaps unless `overwrite=true`, and reuses undefined padding. Field removal
+  defaults to preserving layout (`shrink=true` explicitly shifts fields).
+- Type deletion checks users and applied data (including typedef/pointer
+  wrappers and function variables/returns) and refuses unless `force=true`.
+- `search_data_types` gains an optional kind filter and accepts an empty pattern;
+  `get_type_size` reports members, signatures and base types.
 
 ### Added — structure descriptions
 
@@ -322,8 +353,8 @@ instead of through `Atomic*` holders; responses are unchanged.
 
 ## v7.0.0 - 2026-10-21 — major: tool consolidation, JSON response contract, MCP conformance suite, an offline test tier, and a release gate that can actually block
 
-**219 tools** — 215 served by the GUI plugin, 200 by the headless server, 196
-by both. 218 are advertised as MCP tools; `/decompile_tree_refresh` is an HTTP route
+**227 tools** — 223 served by the GUI plugin, 208 by the headless server, 204
+by both. 226 are advertised as MCP tools; `/decompile_tree_refresh` is an HTTP route
 only the bridge calls. The advertised surface went from 272 → 251 in the first consolidation
 cycle, then 253 after `/list_shadowed_globals` and `/batch_get_comments` (the
 7.0.0-rc.1 catalog). After rc.1 it went to 245 once `/get_functions` replaced
@@ -336,8 +367,9 @@ became shared services (`/server/version_control/checkin` and
 `/apply_function_documentation` and `/batch_apply_documentation` (53 tools
 removed and 9 added since rc.1, every one named in
 [`MIGRATION_7.0.0_TOOL_CONSOLIDATION.md`](docs/project-management/MIGRATION_7.0.0_TOOL_CONSOLIDATION.md)),
-218 with the decompilation tree, `/partition_program` and `/find_type_users`, and
-**219** with `/get_change_token`.
+218 with the decompilation tree, `/partition_program` and `/find_type_users`,
+219 with `/get_change_token`, and **227** after the six localized override tools,
+`/clear_data` and `/adjust_pointer_offset`.
 
 Entries further down quote the catalog as it stood when they landed (251, 253,
 the 235-tool schema recording); the figures above are the current ones.

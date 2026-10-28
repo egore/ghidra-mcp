@@ -242,7 +242,7 @@ public class CommentService {
                 default: return Response.err("Unsupported comment_type: " + commentType);
             }
             return BatchOperations.run(program, threadingStrategy, "Set comments", comments, item -> {
-                Address at = OverrideService.requireAddress(program, item.get("address"));
+                Address at = BatchOperations.requireAddress(program, item.get("address"));
                 if (!item.containsKey("comment")) throw new IllegalArgumentException("comment is required; use null or an empty string to clear");
                 String comment = item.get("comment");
                 if (type == CodeUnit.PLATE_COMMENT) {
